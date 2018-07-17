@@ -91,7 +91,7 @@ public class AlgamoneyExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Getter
     @AllArgsConstructor
-    private static class Erro {
+    public static class Erro {
 
         private String mensagemUsuario;
         private String mensagemDesenvolvedor;
