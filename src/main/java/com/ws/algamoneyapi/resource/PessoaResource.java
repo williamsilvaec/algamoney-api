@@ -3,6 +3,7 @@ package com.ws.algamoneyapi.resource;
 import com.ws.algamoneyapi.event.RecursoCriadoEvent;
 import com.ws.algamoneyapi.model.Pessoa;
 import com.ws.algamoneyapi.repository.PessoaRepository;
+import com.ws.algamoneyapi.service.PessoaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -18,11 +19,13 @@ public class PessoaResource {
 
     private final PessoaRepository pessoaRepository;
     private final ApplicationEventPublisher publisher;
+    private final PessoaService pessoaService;
 
     @Autowired
-    public PessoaResource(PessoaRepository pessoaRepository, ApplicationEventPublisher publisher) {
+    public PessoaResource(PessoaRepository pessoaRepository, ApplicationEventPublisher publisher, PessoaService pessoaService) {
         this.pessoaRepository = pessoaRepository;
         this.publisher = publisher;
+        this.pessoaService = pessoaService;
     }
 
     @PostMapping
@@ -33,7 +36,7 @@ public class PessoaResource {
     }
 
     @GetMapping("{codigo}")
-    public ResponseEntity<Pessoa> listarPeloCodigo(@PathVariable Long codigo) {
+    public ResponseEntity<Pessoa> buscarPeloCodigo(@PathVariable Long codigo) {
         Pessoa pessoa = pessoaRepository.findOne(codigo);
         return pessoa != null ? ResponseEntity.ok(pessoa) : ResponseEntity.notFound().build();
     }
@@ -42,5 +45,11 @@ public class PessoaResource {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remover(@PathVariable Long codigo) {
         pessoaRepository.delete(codigo);
+    }
+
+    @PutMapping("{codigo}")
+    public ResponseEntity<Pessoa> atualizar(@PathVariable Long codigo, @RequestBody @Valid Pessoa pessoa) {
+        Pessoa pessoaSalva = pessoaService.atualizar(codigo, pessoa);
+        return ResponseEntity.ok(pessoaSalva);
     }
 }
