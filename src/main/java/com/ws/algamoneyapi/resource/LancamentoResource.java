@@ -87,4 +87,11 @@ public class LancamentoResource {
         List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
         return ResponseEntity.badRequest().body(erros);
     }
+
+    @PutMapping("{codigo}")
+    @PreAuthorize("hasAuthority('ROLE_CADASTRAR_LANCAMENTO') and #oauth2.hasScope('write')")
+    public ResponseEntity<Lancamento> atualizar(@PathVariable Long codigo, @RequestBody @Valid Lancamento lancamento) {
+        Lancamento lancamentoSalvo = lancamentoService.atualizar(codigo, lancamento);
+        return ResponseEntity.ok(lancamentoSalvo);
+    }
 }
