@@ -1,7 +1,5 @@
 package com.ws.algamoneyapi.exceptionhandler;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -89,11 +87,23 @@ public class AlgamoneyExceptionHandler extends ResponseEntityExceptionHandler {
         return erros;
     }
 
-    @Getter
-    @AllArgsConstructor
+
     public static class Erro {
 
         private String mensagemUsuario;
         private String mensagemDesenvolvedor;
+
+        public Erro(String mensagemUsuario, String mensagemDesenvolvedor) {
+            this.mensagemUsuario = mensagemUsuario;
+            this.mensagemDesenvolvedor = mensagemDesenvolvedor;
+        }
+
+        public String getMensagemUsuario() {
+            return mensagemUsuario;
+        }
+
+        public String getMensagemDesenvolvedor() {
+            return mensagemDesenvolvedor;
+        }
     }
 }
