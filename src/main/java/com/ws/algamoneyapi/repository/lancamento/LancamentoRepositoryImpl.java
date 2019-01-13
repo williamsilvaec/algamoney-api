@@ -1,5 +1,7 @@
 package com.ws.algamoneyapi.repository.lancamento;
 
+import com.ws.algamoneyapi.dto.LancamentoEstatisticaCategoria;
+import com.ws.algamoneyapi.dto.LancamentoEstatisticaDia;
 import com.ws.algamoneyapi.model.Categoria_;
 import com.ws.algamoneyapi.model.Lancamento;
 import com.ws.algamoneyapi.model.Lancamento_;
@@ -18,6 +20,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,20 +66,88 @@ public class LancamentoRepositoryImpl implements LancamentoRepositoryQuery {
         return new PageImpl<>(query.getResultList(), pageable, total(lancamentoFilter));
     }
 
+    @Override
+    public List<LancamentoEstatisticaCategoria> porCategoria(LocalDate mesReferencia) {
+        CriteriaBuilder criteriaBuilder = manager.getCriteriaBuilder();
+
+        // O que eu quero retornar
+        CriteriaQuery<LancamentoEstatisticaCategoria> criteriaQuery = criteriaBuilder
+                .createQuery(LancamentoEstatisticaCategoria.class);
+
+        // Qual entidade eu quero buscar os dados
+        Root<Lancamento> root = criteriaQuery.from(Lancamento.class);
+
+        criteriaQuery.select(criteriaBuilder.construct(LancamentoEstatisticaCategoria.class,
+                root.get(Lancamento_.categoria),
+                criteriaBuilder.sum(root.get(Lancamento_.valor))));
+
+        LocalDate primeiroDia = mesReferencia.withDayOfMonth(1);
+        LocalDate ultimoDia = mesReferencia.withDayOfMonth(mesReferencia.lengthOfMonth());
+
+        criteriaQuery.where(
+                criteriaBuilder.greaterThanOrEqualTo(root.get(Lancamento_.dataVencimento), primeiroDia),
+                criteriaBuilder.lessThanOrEqualTo(root.get(Lancamento_.dataVencimento), ultimoDia)
+        );
+
+        criteriaQuery.groupBy(root.get(Lancamento_.categoria));
+
+        // Cria o objeto de retorno passando no generics a classe que vai ser retornada e
+        // passa a consulta no manager, ou seja, o objeto criteriaQuery
+        TypedQuery<LancamentoEstatisticaCategoria> typedQuery = manager
+                .createQuery(criteriaQuery);
+
+        return typedQuery.getResultList();
+    }
+
+    @Override
+    public List<LancamentoEstatisticaDia> porDia(LocalDate mesReferencia) {
+        CriteriaBuilder criteriaBuilder = manager.getCriteriaBuilder();
+
+        // O que será retornado
+        CriteriaQuery<LancamentoEstatisticaDia> criteriaQuery = criteriaBuilder
+                .createQuery(LancamentoEstatisticaDia.class);
+
+        // Entidade onde será buscado os dados
+        Root<Lancamento> root = criteriaQuery.from(Lancamento.class);
+
+        criteriaQuery.select(criteriaBuilder.construct(LancamentoEstatisticaDia.class,
+                root.get(Lancamento_.tipo),
+                root.get(Lancamento_.dataVencimento),
+                criteriaBuilder.sum(root.get(Lancamento_.valor))));
+
+        LocalDate primeiroDia = mesReferencia.withDayOfMonth(1);
+        LocalDate ultimoDia = mesReferencia.withDayOfMonth(mesReferencia.lengthOfMonth());
+
+        criteriaQuery.where(
+                criteriaBuilder.greaterThanOrEqualTo(root.get(Lancamento_.dataVencimento), primeiroDia),
+                criteriaBuilder.lessThanOrEqualTo(root.get(Lancamento_.dataVencimento), ultimoDia));
+
+        criteriaQuery.groupBy(root.get(Lancamento_.tipo), root.get(Lancamento_.categoria));
+
+        TypedQuery<LancamentoEstatisticaDia> typedQuery = manager.createQuery(criteriaQuery);
+
+        return typedQuery.getResultList();
+    }
+
     private Predicate[] criarRestricoes(LancamentoFilter lancamentoFilter, CriteriaBuilder builder, Root<Lancamento> root) {
         List<Predicate> predicates = new ArrayList<>();
 
         if (!StringUtils.isEmpty(lancamentoFilter.getDescricao())) {
             predicates.add(builder.like(
-                    builder.lower(root.get(Lancamento_.descricao)), "%" + lancamentoFilter.getDescricao().toLowerCase() + "%"));
+                    builder.lower(root.get(Lancamento_.descricao)),
+                    "%" + lancamentoFilter.getDescricao().toLowerCase() + "%"));
         }
 
         if (lancamentoFilter.getDataVencimentoDe() != null) {
-            predicates.add(builder.greaterThanOrEqualTo(root.get(Lancamento_.dataVencimento), lancamentoFilter.getDataVencimentoDe()));
+            predicates.add(builder.greaterThanOrEqualTo(
+                    root.get(Lancamento_.dataVencimento),
+                    lancamentoFilter.getDataVencimentoDe())
+            );
         }
 
         if (lancamentoFilter.getDataVencimentoAte() != null) {
-            predicates.add(builder.lessThanOrEqualTo(root.get(Lancamento_.dataVencimento), lancamentoFilter.getDataVencimentoAte()));
+            predicates.add(builder.lessThanOrEqualTo(
+                    root.get(Lancamento_.dataVencimento), lancamentoFilter.getDataVencimentoAte()));
         }
 
         return predicates.toArray(new Predicate[predicates.size()]);

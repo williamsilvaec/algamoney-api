@@ -1,5 +1,7 @@
 package com.ws.algamoneyapi.resource;
 
+import com.ws.algamoneyapi.dto.LancamentoEstatisticaCategoria;
+import com.ws.algamoneyapi.dto.LancamentoEstatisticaDia;
 import com.ws.algamoneyapi.event.RecursoCriadoEvent;
 import com.ws.algamoneyapi.exceptionhandler.AlgamoneyExceptionHandler.Erro;
 import com.ws.algamoneyapi.model.Lancamento;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,6 +45,18 @@ public class LancamentoResource {
         this.publisher = publisher;
         this.lancamentoService = lancamentoService;
         this.messageSource = messageSource;
+    }
+
+    @GetMapping("/estatisticas/por-categoria")
+    @PreAuthorize("hasAuthority('ROLE_PESQUISAR_LANCAMENTO') and #oauth2.hasScope('read')")
+    public List<LancamentoEstatisticaCategoria> porCategoria() {
+        return lancamentoRepository.porCategoria(LocalDate.now());
+    }
+
+    @GetMapping("/estatisticas/por-dia")
+    @PreAuthorize("hasAuthority('ROLE_PESQUISAR_LANCAMENTO') and #oauth2.hasScope('read')")
+    public List<LancamentoEstatisticaDia> porDia() {
+        return lancamentoRepository.porDia(LocalDate.now());
     }
 
     @GetMapping
